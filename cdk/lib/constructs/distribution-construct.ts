@@ -1,4 +1,3 @@
-import * as cdk from 'aws-cdk-lib';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
@@ -27,32 +26,14 @@ export class DistributionConstruct extends Construct {
       },
     });
 
-    // Cache policy that disables caching for API traffic.
-    // POST requests are never cached by CloudFront by default, but we also
-    // set TTLs to 0 so GET/OPTIONS responses are not cached either.
-    const apiCachePolicy = new cloudfront.CachePolicy(this, 'ApiCachePolicy', {
-      cachePolicyName: `GatewayApiNoCachePolicy-${cdk.Names.uniqueId(this)}`,
-      defaultTtl: cdk.Duration.seconds(0),
-      minTtl: cdk.Duration.seconds(0),
-      maxTtl: cdk.Duration.seconds(0),
-      headerBehavior: cloudfront.CacheHeaderBehavior.allowList(
-        'Authorization',
-        'Content-Type',
-      ),
-      queryStringBehavior: cloudfront.CacheQueryStringBehavior.all(),
-      enableAcceptEncodingGzip: true,
-    });
+    // Use the managed CACHING_DISABLED policy — CloudFront does not allow
+    // HeaderBehavior on custom policies when caching is disabled (all TTLs = 0).
+    const apiCachePolicy = cloudfront.CachePolicy.CACHING_DISABLED;
 
-    // Origin request policy to forward relevant headers to the ALB.
-    // Note: Authorization is forwarded via the CachePolicy above (CloudFront
-    // does not allow Authorization in OriginRequestPolicy).
-    const originRequestPolicy = new cloudfront.OriginRequestPolicy(this, 'OriginRequestPolicy', {
-      originRequestPolicyName: `GatewayOriginRequestPolicy-${cdk.Names.uniqueId(this)}`,
-      headerBehavior: cloudfront.OriginRequestHeaderBehavior.allowList(
-        'Content-Type',
-      ),
-      queryStringBehavior: cloudfront.OriginRequestQueryStringBehavior.all(),
-    });
+    // Origin request policy to forward relevant headers and query strings to the ALB.
+    // Using ALL_VIEWER_EXCEPT_HOST_HEADER forwards all headers (including Authorization
+    // and Content-Type) plus query strings to the origin.
+    const originRequestPolicy = cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER;
 
     // CloudFront distribution — terminates HTTPS from clients, forwards to ALB over HTTP
     this.distribution = new cloudfront.Distribution(this, 'Distribution', {
