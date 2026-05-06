@@ -16,6 +16,7 @@
 - [Open Source Library](#open-source-library)
 - [Notices](#notices)
 
+
 ## Project Overview
 
 This project provides a simple Terraform deployment of [LiteLLM](https://github.com/BerriAI/litellm) into Amazon Elastic Container Service (ECS) and Elastic Kubernetes Service (EKS) platforms on AWS. It aims to be pre-configured with defaults that will allow most users to quickly get started with LiteLLM.
