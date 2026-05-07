@@ -9,12 +9,13 @@ Routes:
 
 import json
 import logging
+import os
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from gateway.config import GatewayConfig, load_config
@@ -38,16 +39,18 @@ _health_tracker: HealthTracker | None = None
 _provider_client: ProviderClient | None = None
 _routing_engine: RoutingEngine | None = None
 _http_client: httpx.AsyncClient | None = None
+_gateway_api_key: str | None = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize components on startup and clean up on shutdown."""
-    global _config, _health_tracker, _provider_client, _routing_engine, _http_client
+    global _config, _health_tracker, _provider_client, _routing_engine, _http_client, _gateway_api_key
 
     configure_logging()
 
     _config = load_config()
+    _gateway_api_key = os.environ.get("GATEWAY_API_KEY", "")
     _health_tracker = HealthTracker(window_size=_config.window_size)
     _http_client = httpx.AsyncClient(timeout=_config.request_timeout_seconds)
     _provider_client = ProviderClient(config=_config, http_client=_http_client)
@@ -64,6 +67,35 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+
+@app.middleware("http")
+async def authenticate(request: Request, call_next):
+    """Validate API key on all endpoints except /health."""
+    if request.url.path == "/health":
+        return await call_next(request)
+
+    # Skip auth if no key is configured (open mode)
+    if not _gateway_api_key:
+        return await call_next(request)
+
+    # Check Authorization: Bearer <key> or X-API-Key header
+    auth_header = request.headers.get("authorization", "")
+    api_key_header = request.headers.get("x-api-key", "")
+
+    token = ""
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+    elif api_key_header:
+        token = api_key_header
+
+    if token != _gateway_api_key:
+        return JSONResponse(
+            status_code=401,
+            content={"error": {"message": "Invalid API key", "type": "authentication_error"}},
+        )
+
+    return await call_next(request)
 
 
 def _emit_request_log(

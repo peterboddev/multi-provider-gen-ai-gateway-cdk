@@ -72,12 +72,46 @@ aws secretsmanager put-secret-value \
   --region <REGION>
 ```
 
-### 5. Test the endpoint
+### 5. Set a gateway API key (optional but recommended)
+
+Generate a random API key and set it as an environment variable on the ECS task. This protects the gateway from unauthorized access.
+
+Generate a key:
+
+```bash
+export GATEWAY_API_KEY=$(openssl rand -hex 32)
+echo "Your gateway API key: $GATEWAY_API_KEY"
+```
+
+Then set it in the CDK stack by adding it to the environment variables in `cdk/lib/gateway-stack.ts`:
+
+```typescript
+environment: {
+  // ... existing vars ...
+  GATEWAY_API_KEY: 'your-generated-key-here',
+},
+```
+
+Or pass it at deploy time via CDK context (requires adding support in the stack).
+
+If `GATEWAY_API_KEY` is not set or empty, the gateway runs in open mode (no auth).
+
+### 6. Test the endpoint
 
 ```bash
 curl -X POST https://<cloudfront-url>/v1/chat/completions \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-gateway-api-key>" \
   -d '{"model": "gpt-4o", "messages": [{"role": "user", "content": "Summarize this document..."}]}'
+```
+
+Alternatively, use the `X-API-Key` header:
+
+```bash
+curl -X POST https://<cloudfront-url>/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <your-gateway-api-key>" \
+  -d '{"model": "gpt-4o", "messages": [{"role": "user", "content": "Hello"}]}'
 ```
 
 ## Deploy Modes
