@@ -102,7 +102,7 @@ If `GATEWAY_API_KEY` is not set or empty, the gateway runs in open mode (no auth
 curl -X POST https://<cloudfront-url>/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-gateway-api-key>" \
-  -d '{"model": "gpt-4o", "messages": [{"role": "user", "content": "Summarize this document..."}]}'
+  -d '{"model": "test", "messages": [{"role": "user", "content": "Summarize this document..."}]}'
 ```
 
 Alternatively, use the `X-API-Key` header:
@@ -111,7 +111,7 @@ Alternatively, use the `X-API-Key` header:
 curl -X POST https://<cloudfront-url>/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "X-API-Key: <your-gateway-api-key>" \
-  -d '{"model": "gpt-4o", "messages": [{"role": "user", "content": "Hello"}]}'
+  -d '{"model": "test", "messages": [{"role": "user", "content": "Hello"}]}'
 ```
 
 ## Deploy Modes
@@ -134,9 +134,9 @@ All routing behavior is configurable via environment variables (set in the CDK s
 | `GATEWAY_ERROR_RATE_THRESHOLD` | 0.5 | Error rate (0-1) above which a provider is unhealthy |
 | `GATEWAY_WINDOW_SIZE` | 50 | Sliding window size for health tracking |
 | `GATEWAY_PRIMARY_PROVIDER` | bedrock | Primary provider preference (bedrock/openai) |
-| `GATEWAY_BEDROCK_MODEL_ID` | us.anthropic.claude-3-5-sonnet-20241022-v2:0 | Bedrock model ID |
-| `GATEWAY_BEDROCK_REGION` | us-east-1 | Bedrock API region |
-| `GATEWAY_OPENAI_MODEL` | gpt-4o | OpenAI model |
+| `GATEWAY_BEDROCK_MODEL_ID` | us.anthropic.claude-haiku-4-5-20251001-v1:0 | Bedrock model ID |
+| `GATEWAY_BEDROCK_REGION` | us-east-2 | Bedrock API region |
+| `GATEWAY_OPENAI_MODEL` | gpt-4o-mini | OpenAI model |
 | `GATEWAY_REQUEST_TIMEOUT_SECONDS` | 30.0 | Request timeout per provider |
 
 ## Routing Algorithm
