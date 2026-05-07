@@ -20,7 +20,7 @@ class GatewayConfig:
     primary_provider: Provider = Provider.BEDROCK
     bedrock_model_id: str = "anthropic.claude-haiku-4-5-20251001-v1:0"
     bedrock_region: str = "us-east-1"
-    openai_model: str = "gpt-4o"
+    openai_model: str = "gpt-4o-mini"
     request_timeout_seconds: float = 30.0
 
 

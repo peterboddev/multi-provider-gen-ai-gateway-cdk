@@ -65,7 +65,7 @@ export class GatewayStack extends cdk.Stack {
         GATEWAY_PRIMARY_PROVIDER: props?.primaryProvider ?? 'bedrock',
         GATEWAY_BEDROCK_MODEL_ID: props?.bedrockModelId ?? 'anthropic.claude-haiku-4-5-20251001-v1:0',
         GATEWAY_BEDROCK_REGION: props?.bedrockRegion ?? 'us-east-1',
-        GATEWAY_OPENAI_MODEL: props?.openaiModel ?? 'gpt-4o',
+        GATEWAY_OPENAI_MODEL: props?.openaiModel ?? 'gpt-4o-mini',
       },
       targetGroup: loadBalancer.targetGroup,
       logGroup: observability.logGroup,
