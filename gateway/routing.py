@@ -4,9 +4,14 @@ Selects the best provider for each request based on health metrics.
 Implements latency-based routing with automatic failover.
 """
 
+import json
+import logging
+
 from gateway.config import GatewayConfig
 from gateway.health import HealthTracker
 from gateway.models import Provider
+
+logger = logging.getLogger(__name__)
 
 
 class RoutingEngine:
@@ -47,26 +52,50 @@ class RoutingEngine:
         primary_healthy = self._health_tracker.is_healthy(primary, self._config)
         secondary_healthy = self._health_tracker.is_healthy(secondary, self._config)
 
-        # Case: one healthy, one unhealthy
-        if primary_healthy and not secondary_healthy:
-            return primary
-        if secondary_healthy and not primary_healthy:
-            return secondary
-
-        # Case: both healthy - pick lower score, primary wins ties
-        if primary_healthy and secondary_healthy:
-            primary_score = self._compute_health_score(primary)
-            secondary_score = self._compute_health_score(secondary)
-            if primary_score <= secondary_score:
-                return primary
-            return secondary
-
-        # Case: both unhealthy - pick lower error rate, primary wins ties
+        primary_score = self._compute_health_score(primary)
+        secondary_score = self._compute_health_score(secondary)
         primary_error_rate = self._health_tracker.get_error_rate(primary)
         secondary_error_rate = self._health_tracker.get_error_rate(secondary)
-        if primary_error_rate <= secondary_error_rate:
-            return primary
-        return secondary
+
+        # Case: one healthy, one unhealthy
+        if primary_healthy and not secondary_healthy:
+            selected = primary
+            reason = "secondary_unhealthy"
+        elif secondary_healthy and not primary_healthy:
+            selected = secondary
+            reason = "primary_unhealthy"
+        # Case: both healthy - pick lower score, primary wins ties
+        elif primary_healthy and secondary_healthy:
+            if primary_score <= secondary_score:
+                selected = primary
+                reason = "lower_score_or_primary_tie"
+            else:
+                selected = secondary
+                reason = "lower_score"
+        # Case: both unhealthy - pick lower error rate, primary wins ties
+        else:
+            if primary_error_rate <= secondary_error_rate:
+                selected = primary
+                reason = "lower_error_rate_or_primary_tie"
+            else:
+                selected = secondary
+                reason = "lower_error_rate"
+
+        logger.info(json.dumps({
+            "event": "routing_decision",
+            "selected": selected.value,
+            "reason": reason,
+            f"{primary.value}_score": round(primary_score, 2),
+            f"{secondary.value}_score": round(secondary_score, 2),
+            f"{primary.value}_healthy": primary_healthy,
+            f"{secondary.value}_healthy": secondary_healthy,
+            f"{primary.value}_error_rate": round(primary_error_rate, 4),
+            f"{secondary.value}_error_rate": round(secondary_error_rate, 4),
+            f"{primary.value}_avg_latency_ms": round(self._health_tracker.get_avg_latency(primary), 2),
+            f"{secondary.value}_avg_latency_ms": round(self._health_tracker.get_avg_latency(secondary), 2),
+        }))
+
+        return selected
 
     def get_fallback_provider(self, failed_provider: Provider) -> Provider:
         """Return the alternate provider for retry."""
