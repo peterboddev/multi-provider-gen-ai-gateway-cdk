@@ -41,7 +41,11 @@ export class ComputeConstruct extends Construct {
     // Grant Bedrock invoke permissions to the task role
     this.taskDefinition.taskRole.addToPrincipalPolicy(
       new iam.PolicyStatement({
-        actions: ['bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream'],
+        actions: [
+          'bedrock:InvokeModel',
+          'bedrock:InvokeModelWithResponseStream',
+          'bedrock-mantle:*',
+        ],
         resources: ['*'],
       })
     );
