@@ -18,7 +18,7 @@ class GatewayConfig:
     error_rate_threshold: float = 0.5
     window_size: int = 50
     primary_provider: Provider = Provider.BEDROCK
-    bedrock_model_id: str = "anthropic.claude-haiku-4-5"
+    bedrock_model_id: str = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     bedrock_region: str = "us-east-2"
     openai_model: str = "gpt-4o-mini"
     request_timeout_seconds: float = 30.0

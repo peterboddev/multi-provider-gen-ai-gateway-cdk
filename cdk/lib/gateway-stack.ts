@@ -64,7 +64,7 @@ export class GatewayStack extends cdk.Stack {
         GATEWAY_ERROR_RATE_THRESHOLD: String(props?.errorRateThreshold ?? 0.5),
         GATEWAY_WINDOW_SIZE: String(props?.windowSize ?? 50),
         GATEWAY_PRIMARY_PROVIDER: props?.primaryProvider ?? 'bedrock',
-        GATEWAY_BEDROCK_MODEL_ID: props?.bedrockModelId ?? 'anthropic.claude-haiku-4-5',
+        GATEWAY_BEDROCK_MODEL_ID: props?.bedrockModelId ?? 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
         GATEWAY_BEDROCK_REGION: props?.bedrockRegion ?? 'us-east-2',
         GATEWAY_OPENAI_MODEL: props?.openaiModel ?? 'gpt-4o-mini',
       },
