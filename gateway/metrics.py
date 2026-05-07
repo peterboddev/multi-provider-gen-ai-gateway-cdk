@@ -122,12 +122,21 @@ def emit_request_metrics(
     latency_ms: float,
     status_code: int,
     is_fallback: bool = False,
+    prompt_tokens: int = 0,
+    completion_tokens: int = 0,
+    total_tokens: int = 0,
 ) -> None:
-    """Emit per-request metrics via EMF."""
+    """Emit per-request metrics via EMF including token counts."""
     metrics = {
         "RequestLatency": round(latency_ms, 2),
         "RequestCount": 1,
+        "PromptTokens": prompt_tokens,
+        "CompletionTokens": completion_tokens,
+        "TotalTokens": total_tokens,
     }
+
+    if total_tokens > 0:
+        metrics["LatencyPerToken"] = round(latency_ms / total_tokens, 2)
 
     if status_code >= 500:
         metrics["ErrorCount"] = 1

@@ -234,5 +234,95 @@ export class DashboardConstruct extends Construct {
         ],
       }),
     );
+
+    // Row 5: Token Usage & Latency Per Token
+    this.dashboard.addWidgets(
+      new cloudwatch.GraphWidget({
+        title: 'Total Tokens per Request',
+        width: 12,
+        height: 6,
+        left: [
+          new cloudwatch.Metric({
+            namespace,
+            metricName: 'TotalTokens',
+            dimensionsMap: { Provider: 'bedrock' },
+            statistic: 'Average',
+            period: cdk.Duration.minutes(1),
+            label: 'Bedrock Avg Tokens',
+            color: '#FF9900',
+          }),
+          new cloudwatch.Metric({
+            namespace,
+            metricName: 'TotalTokens',
+            dimensionsMap: { Provider: 'openai' },
+            statistic: 'Average',
+            period: cdk.Duration.minutes(1),
+            label: 'OpenAI Avg Tokens',
+            color: '#10A37F',
+          }),
+        ],
+      }),
+      new cloudwatch.GraphWidget({
+        title: 'Latency Per Token (ms/token)',
+        width: 12,
+        height: 6,
+        left: [
+          new cloudwatch.Metric({
+            namespace,
+            metricName: 'LatencyPerToken',
+            dimensionsMap: { Provider: 'bedrock' },
+            statistic: 'Average',
+            period: cdk.Duration.minutes(1),
+            label: 'Bedrock avg',
+            color: '#FF9900',
+          }),
+          new cloudwatch.Metric({
+            namespace,
+            metricName: 'LatencyPerToken',
+            dimensionsMap: { Provider: 'bedrock' },
+            statistic: 'Minimum',
+            period: cdk.Duration.minutes(1),
+            label: 'Bedrock min',
+            color: '#FFCC80',
+          }),
+          new cloudwatch.Metric({
+            namespace,
+            metricName: 'LatencyPerToken',
+            dimensionsMap: { Provider: 'bedrock' },
+            statistic: 'Maximum',
+            period: cdk.Duration.minutes(1),
+            label: 'Bedrock max',
+            color: '#E65100',
+          }),
+          new cloudwatch.Metric({
+            namespace,
+            metricName: 'LatencyPerToken',
+            dimensionsMap: { Provider: 'openai' },
+            statistic: 'Average',
+            period: cdk.Duration.minutes(1),
+            label: 'OpenAI avg',
+            color: '#10A37F',
+          }),
+          new cloudwatch.Metric({
+            namespace,
+            metricName: 'LatencyPerToken',
+            dimensionsMap: { Provider: 'openai' },
+            statistic: 'Minimum',
+            period: cdk.Duration.minutes(1),
+            label: 'OpenAI min',
+            color: '#80CBC4',
+          }),
+          new cloudwatch.Metric({
+            namespace,
+            metricName: 'LatencyPerToken',
+            dimensionsMap: { Provider: 'openai' },
+            statistic: 'Maximum',
+            period: cdk.Duration.minutes(1),
+            label: 'OpenAI max',
+            color: '#004D40',
+          }),
+        ],
+      }),
+    );
   }
 }

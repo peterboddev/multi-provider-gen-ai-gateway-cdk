@@ -105,6 +105,7 @@ def _emit_request_log(
     stream: bool = False,
     fallback: bool = False,
     fallback_reason: str | None = None,
+    response_body: dict | None = None,
 ) -> None:
     """Emit a structured JSON log entry for a completed request."""
     log_entry = {
@@ -120,12 +121,21 @@ def _emit_request_log(
             log_entry["fallback_reason"] = fallback_reason
     logger.info(json.dumps(log_entry))
 
+    # Extract token counts from response
+    usage = (response_body or {}).get("usage", {})
+    prompt_tokens = usage.get("prompt_tokens", 0)
+    completion_tokens = usage.get("completion_tokens", 0)
+    total_tokens = usage.get("total_tokens", 0)
+
     # Emit EMF metrics
     emit_request_metrics(
         provider=provider,
         latency_ms=latency_ms,
         status_code=status_code,
         is_fallback=fallback,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        total_tokens=total_tokens,
     )
 
 
@@ -252,6 +262,7 @@ async def _handle_sync_request(request_body: dict) -> JSONResponse:
             status_code=fallback_response.status_code,
             fallback=True,
             fallback_reason="primary_provider_failure",
+            response_body=fallback_response.body,
         )
         return JSONResponse(
             status_code=fallback_response.status_code,
@@ -264,6 +275,7 @@ async def _handle_sync_request(request_body: dict) -> JSONResponse:
         provider=provider.value,
         latency_ms=latency_ms,
         status_code=response.status_code,
+        response_body=response.body,
     )
     return JSONResponse(status_code=response.status_code, content=response.body)
 
