@@ -10,6 +10,7 @@ import { DistributionConstruct } from './constructs/distribution-construct';
 import { ObservabilityConstruct } from './constructs/observability-construct';
 
 export interface GatewayStackProps extends cdk.StackProps {
+  deployEnv?: 'dev' | 'prod'; // default: 'prod'
   taskCpu?: number;
   taskMemory?: number;
   desiredCount?: number;
@@ -27,6 +28,8 @@ export class GatewayStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: GatewayStackProps) {
     super(scope, id, props);
 
+    const isDev = props?.deployEnv === 'dev';
+
     // 1. Network
     const network = new NetworkConstruct(this, 'Network');
 
@@ -36,6 +39,8 @@ export class GatewayStack extends cdk.Stack {
     // 3. Load Balancer
     const loadBalancer = new LoadBalancerConstruct(this, 'LoadBalancer', {
       vpc: network.vpc,
+      healthCheckInterval: isDev ? 10 : 30,
+      deregistrationDelay: isDev ? 10 : 300,
     });
 
     // 4. Observability (needs target group for alarm)
@@ -49,8 +54,8 @@ export class GatewayStack extends cdk.Stack {
       vpc: network.vpc,
       taskCpu: props?.taskCpu,
       taskMemory: props?.taskMemory,
-      desiredCount: props?.desiredCount,
-      maxCount: props?.maxCount,
+      desiredCount: isDev ? 1 : (props?.desiredCount ?? 2),
+      maxCount: isDev ? 2 : (props?.maxCount ?? 6),
       containerImage: ecs.ContainerImage.fromAsset(path.join(__dirname, '../../gateway')),
       secrets: secrets.ecsSecrets,
       environment: {

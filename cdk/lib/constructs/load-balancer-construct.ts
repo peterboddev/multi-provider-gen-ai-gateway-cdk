@@ -6,6 +6,8 @@ import { Construct } from 'constructs';
 export interface LoadBalancerConstructProps {
   vpc: ec2.IVpc;
   healthCheckPath?: string; // default: "/health"
+  healthCheckInterval?: number; // seconds, default: 30
+  deregistrationDelay?: number; // seconds, default: 300
 }
 
 export class LoadBalancerConstruct extends Construct {
@@ -47,9 +49,10 @@ export class LoadBalancerConstruct extends Construct {
       port: 8000,
       protocol: elbv2.ApplicationProtocol.HTTP,
       targetType: elbv2.TargetType.IP,
+      deregistrationDelay: cdk.Duration.seconds(props.deregistrationDelay ?? 300),
       healthCheck: {
         path: props.healthCheckPath ?? '/health',
-        interval: cdk.Duration.seconds(30),
+        interval: cdk.Duration.seconds(props.healthCheckInterval ?? 30),
         timeout: cdk.Duration.seconds(5),
         healthyThresholdCount: 2,
         unhealthyThresholdCount: 3,
