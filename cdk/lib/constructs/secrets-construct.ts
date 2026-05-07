@@ -5,32 +5,42 @@ import { Construct } from 'constructs';
 
 export interface SecretsConstructProps {
   openAiApiKeySecretName?: string; // default: "gateway/openai-api-key"
+  gatewayApiKeySecretName?: string; // default: "gateway/api-key"
 }
 
 export class SecretsConstruct extends Construct {
   public readonly openAiSecret: secretsmanager.ISecret;
+  public readonly gatewayApiKeySecret: secretsmanager.ISecret;
   public readonly ecsSecrets: Record<string, ecs.Secret>;
 
   constructor(scope: Construct, id: string, props?: SecretsConstructProps) {
     super(scope, id);
 
-    const secretName = props?.openAiApiKeySecretName ?? 'gateway/openai-api-key';
+    const openAiSecretName = props?.openAiApiKeySecretName ?? 'gateway/openai-api-key';
+    const gatewayApiKeySecretName = props?.gatewayApiKeySecretName ?? 'gateway/api-key';
 
-    // Create the secret shell. CDK generates a placeholder value on first deploy.
-    // Set the real value manually after deploy:
-    //   aws secretsmanager put-secret-value --secret-id gateway/openai-api-key --secret-string "sk-..."
-    // RETAIN policy ensures the secret (and its value) survives stack deletion.
-    const secret = new secretsmanager.Secret(this, 'OpenAiApiKey', {
-      secretName,
+    // OpenAI API key secret
+    const openAiSecret = new secretsmanager.Secret(this, 'OpenAiApiKey', {
+      secretName: openAiSecretName,
       description: 'OpenAI API key for the multi-provider gateway. Set value manually after deploy.',
     });
-    secret.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
+    openAiSecret.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
+    this.openAiSecret = openAiSecret;
 
-    this.openAiSecret = secret;
+    // Gateway API key secret (for authenticating client requests)
+    // CDK creates the shell. Set the real value manually after deploy:
+    //   aws secretsmanager put-secret-value --secret-id gateway/api-key --secret-string "$(openssl rand -hex 32)"
+    const gatewayApiKey = new secretsmanager.Secret(this, 'GatewayApiKey', {
+      secretName: gatewayApiKeySecretName,
+      description: 'API key for authenticating requests to the gateway. Set value manually after deploy.',
+    });
+    gatewayApiKey.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
+    this.gatewayApiKeySecret = gatewayApiKey;
 
     // ECS-compatible secret mapping for container injection
     this.ecsSecrets = {
       OPENAI_API_KEY: ecs.Secret.fromSecretsManager(this.openAiSecret),
+      GATEWAY_API_KEY: ecs.Secret.fromSecretsManager(this.gatewayApiKeySecret),
     };
   }
 }
