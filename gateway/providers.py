@@ -46,11 +46,12 @@ class ProviderClient:
         self._botocore_session = BotocoreSession()
 
     def _get_bedrock_url(self) -> str:
-        """Construct the Bedrock OpenAI-compatible endpoint URL."""
+        """Construct the Bedrock OpenAI-compatible Chat Completions endpoint URL."""
         region = self._config.bedrock_region
+        model_id = self._config.bedrock_model_id
         return (
-            f"https://bedrock-mantle.{region}.api.aws"
-            f"/v1/chat/completions"
+            f"https://bedrock-runtime.{region}.amazonaws.com"
+            f"/model/{model_id}/chat/completions"
         )
 
     def _sign_bedrock_request(
