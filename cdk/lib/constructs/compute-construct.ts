@@ -44,6 +44,7 @@ export class ComputeConstruct extends Construct {
         actions: [
           'bedrock:InvokeModel',
           'bedrock:InvokeModelWithResponseStream',
+          'bedrock-mantle:*',
         ],
         resources: ['*'],
       })
