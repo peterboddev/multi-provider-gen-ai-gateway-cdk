@@ -48,10 +48,9 @@ class ProviderClient:
     def _get_bedrock_url(self) -> str:
         """Construct the Bedrock OpenAI-compatible endpoint URL."""
         region = self._config.bedrock_region
-        model_id = self._config.bedrock_model_id
         return (
-            f"https://bedrock-runtime.{region}.amazonaws.com"
-            f"/model/{model_id}/invoke"
+            f"https://bedrock-mantle.{region}.api.aws"
+            f"/v1/chat/completions"
         )
 
     def _sign_bedrock_request(
@@ -96,9 +95,10 @@ class ProviderClient:
         """
         import json
 
-        body_bytes = json.dumps(request_body).encode("utf-8")
-
         if provider == Provider.BEDROCK:
+            # Override model field with the configured Bedrock model/inference profile ID
+            bedrock_body = {**request_body, "model": self._config.bedrock_model_id}
+            body_bytes = json.dumps(bedrock_body).encode("utf-8")
             url = self._get_bedrock_url()
             headers = {"Content-Type": "application/json"}
             signed_headers = self._sign_bedrock_request(
@@ -106,6 +106,9 @@ class ProviderClient:
             )
             return url, signed_headers, body_bytes
         else:
+            # Override model field with the configured OpenAI model
+            openai_body = {**request_body, "model": self._config.openai_model}
+            body_bytes = json.dumps(openai_body).encode("utf-8")
             url = OPENAI_CHAT_COMPLETIONS_URL
             headers = self._get_openai_headers()
             return url, headers, body_bytes
