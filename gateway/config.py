@@ -43,10 +43,10 @@ def load_config() -> GatewayConfig:
         window_size=int(os.environ.get("GATEWAY_WINDOW_SIZE", "50")),
         primary_provider=primary_provider,
         bedrock_model_id=os.environ.get(
-            "GATEWAY_BEDROCK_MODEL_ID", "anthropic.claude-3-sonnet-20240229-v1:0"
+            "GATEWAY_BEDROCK_MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0"
         ),
-        bedrock_region=os.environ.get("GATEWAY_BEDROCK_REGION", "us-east-1"),
-        openai_model=os.environ.get("GATEWAY_OPENAI_MODEL", "gpt-4o"),
+        bedrock_region=os.environ.get("GATEWAY_BEDROCK_REGION", "us-east-2"),
+        openai_model=os.environ.get("GATEWAY_OPENAI_MODEL", "gpt-4o-mini"),
         request_timeout_seconds=float(
             os.environ.get("GATEWAY_REQUEST_TIMEOUT_SECONDS", "30.0")
         ),
