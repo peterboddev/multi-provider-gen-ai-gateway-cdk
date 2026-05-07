@@ -20,6 +20,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from gateway.config import GatewayConfig, load_config
 from gateway.health import HealthTracker
 from gateway.logging_config import configure_logging
+from gateway.metrics import emit_request_metrics
 from gateway.models import (
     ChatCompletionRequest,
     ErrorResponse,
@@ -86,6 +87,14 @@ def _emit_request_log(
         if fallback_reason:
             log_entry["fallback_reason"] = fallback_reason
     logger.info(json.dumps(log_entry))
+
+    # Emit EMF metrics
+    emit_request_metrics(
+        provider=provider,
+        latency_ms=latency_ms,
+        status_code=status_code,
+        is_fallback=fallback,
+    )
 
 
 @app.get("/health")

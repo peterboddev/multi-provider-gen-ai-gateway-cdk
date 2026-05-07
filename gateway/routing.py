@@ -9,6 +9,7 @@ import logging
 
 from gateway.config import GatewayConfig
 from gateway.health import HealthTracker
+from gateway.metrics import emit_routing_decision
 from gateway.models import Provider
 
 logger = logging.getLogger(__name__)
@@ -81,18 +82,42 @@ class RoutingEngine:
                 selected = secondary
                 reason = "lower_error_rate"
 
+        # Emit EMF metrics for CloudWatch dashboard
+        bedrock_latency = self._health_tracker.get_avg_latency(Provider.BEDROCK)
+        openai_latency = self._health_tracker.get_avg_latency(Provider.OPENAI)
+        bedrock_err = self._health_tracker.get_error_rate(Provider.BEDROCK)
+        openai_err = self._health_tracker.get_error_rate(Provider.OPENAI)
+        bedrock_sc = self._compute_health_score(Provider.BEDROCK)
+        openai_sc = self._compute_health_score(Provider.OPENAI)
+        bedrock_h = self._health_tracker.is_healthy(Provider.BEDROCK, self._config)
+        openai_h = self._health_tracker.is_healthy(Provider.OPENAI, self._config)
+
+        emit_routing_decision(
+            selected=selected.value,
+            reason=reason,
+            bedrock_score=bedrock_sc,
+            openai_score=openai_sc,
+            bedrock_healthy=bedrock_h,
+            openai_healthy=openai_h,
+            bedrock_error_rate=bedrock_err,
+            openai_error_rate=openai_err,
+            bedrock_avg_latency_ms=bedrock_latency,
+            openai_avg_latency_ms=openai_latency,
+        )
+
+        # Structured log for CloudWatch Logs Insights
         logger.info(json.dumps({
             "event": "routing_decision",
             "selected": selected.value,
             "reason": reason,
-            f"{primary.value}_score": round(primary_score, 2),
-            f"{secondary.value}_score": round(secondary_score, 2),
-            f"{primary.value}_healthy": primary_healthy,
-            f"{secondary.value}_healthy": secondary_healthy,
-            f"{primary.value}_error_rate": round(primary_error_rate, 4),
-            f"{secondary.value}_error_rate": round(secondary_error_rate, 4),
-            f"{primary.value}_avg_latency_ms": round(self._health_tracker.get_avg_latency(primary), 2),
-            f"{secondary.value}_avg_latency_ms": round(self._health_tracker.get_avg_latency(secondary), 2),
+            "bedrock_score": round(bedrock_sc, 2),
+            "openai_score": round(openai_sc, 2),
+            "bedrock_healthy": bedrock_h,
+            "openai_healthy": openai_h,
+            "bedrock_error_rate": round(bedrock_err, 4),
+            "openai_error_rate": round(openai_err, 4),
+            "bedrock_avg_latency_ms": round(bedrock_latency, 2),
+            "openai_avg_latency_ms": round(openai_latency, 2),
         }))
 
         return selected

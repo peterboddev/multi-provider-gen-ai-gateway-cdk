@@ -8,6 +8,7 @@ import { LoadBalancerConstruct } from './constructs/load-balancer-construct';
 import { ComputeConstruct } from './constructs/compute-construct';
 import { DistributionConstruct } from './constructs/distribution-construct';
 import { ObservabilityConstruct } from './constructs/observability-construct';
+import { DashboardConstruct } from './constructs/dashboard-construct';
 
 export interface GatewayStackProps extends cdk.StackProps {
   deployEnv?: 'dev' | 'prod'; // default: 'prod'
@@ -74,6 +75,11 @@ export class GatewayStack extends cdk.Stack {
     // 6. CloudFront Distribution
     const distribution = new DistributionConstruct(this, 'Distribution', {
       alb: loadBalancer.alb,
+    });
+
+    // 7. CloudWatch Dashboard
+    new DashboardConstruct(this, 'Dashboard', {
+      serviceName: 'gateway',
     });
 
     // Stack outputs
